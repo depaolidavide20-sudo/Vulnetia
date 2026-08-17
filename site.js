@@ -2,7 +2,7 @@
   const waNumber = "393338426879";
   const labels = {
     it: {
-      greeting: "Ciao Vulnetia, vorrei ricevere disponibilita e prezzo per una camera.",
+      greeting: "Ciao Vulnetia, vorrei ricevere disponibilità e prezzo per una camera.",
       room: "Soluzione",
       dates: "Date",
       guests: "Ospiti",
@@ -29,6 +29,84 @@
     const update = () => header.classList.toggle("is-scrolled", window.scrollY > 8);
     update();
     window.addEventListener("scroll", update, { passive: true });
+  }
+
+  function initMobileMenu() {
+    const header = document.querySelector(".site-header");
+    const menu = document.querySelector("[data-mobile-menu]");
+    const button = document.querySelector("[data-mobile-menu-button]");
+    if (!header || !menu || !button) return;
+
+    const close = () => {
+      menu.classList.remove("is-open");
+      header.classList.remove("is-menu-open");
+      button.setAttribute("aria-expanded", "false");
+    };
+
+    button.addEventListener("click", () => {
+      const nextOpen = !menu.classList.contains("is-open");
+      menu.classList.toggle("is-open", nextOpen);
+      header.classList.toggle("is-menu-open", nextOpen);
+      button.setAttribute("aria-expanded", String(nextOpen));
+    });
+
+    menu.querySelectorAll("a").forEach((link) => link.addEventListener("click", close));
+  }
+
+  function initMobileCta() {
+    const cta = document.querySelector("[data-mobile-cta]");
+    const main = cta?.querySelector("[data-mobile-cta-main]");
+    const call = cta?.querySelector("[data-mobile-cta-call]");
+    if (!cta || !main || !call) return;
+
+    const sections = ["top", "camere", "ristorante", "recensioni", "contatti"]
+      .map((id) => document.getElementById(id))
+      .filter(Boolean);
+
+    if (!sections.length) return;
+
+    const read = (key, fallback = "") => cta.getAttribute("data-" + key) || fallback;
+
+    const applyMode = (mode) => {
+      cta.classList.remove("mobile-cta-hero", "mobile-cta-rooms", "mobile-cta-restaurant", "has-call");
+      cta.classList.add("mobile-cta-" + mode);
+      if (mode !== "hero") cta.classList.add("has-call");
+
+      main.textContent = read(mode + "-label", main.textContent.trim());
+      main.setAttribute("href", read(mode + "-href", "#camere"));
+
+      if (mode === "rooms") {
+        call.setAttribute("href", read("rooms-call", "tel:+393338426879"));
+        call.setAttribute("aria-label", read("rooms-call-label"));
+      } else if (mode === "restaurant") {
+        call.setAttribute("href", read("restaurant-call", "tel:+390187821193"));
+        call.setAttribute("aria-label", read("restaurant-call-label"));
+      }
+    };
+
+    const update = () => {
+      const trigger = window.innerHeight * 0.52;
+      let activeId = "top";
+
+      sections.forEach((section) => {
+        const rect = section.getBoundingClientRect();
+        if (rect.top <= trigger && rect.bottom > 120) {
+          activeId = section.id;
+        }
+      });
+
+      if (activeId === "camere") {
+        applyMode("rooms");
+      } else if (["ristorante", "recensioni", "contatti"].includes(activeId)) {
+        applyMode("restaurant");
+      } else {
+        applyMode("hero");
+      }
+    };
+
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
   }
 
   function textFrom(labelText) {
@@ -87,6 +165,8 @@
   }
 
   initHeader();
+  initMobileMenu();
+  initMobileCta();
   initBookingForms();
   initCarousels();
 })();
