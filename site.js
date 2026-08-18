@@ -67,6 +67,8 @@
   function initMobileCta() {
     const cta = document.querySelector("[data-mobile-cta]");
     const main = cta?.querySelector("[data-mobile-cta-main]");
+    const mainLabel = cta?.querySelector("[data-mobile-cta-main-label]");
+    const mainIcon = cta?.querySelector("[data-mobile-cta-main-icon]");
     const call = cta?.querySelector("[data-mobile-cta-call]");
     if (!cta || !main || !call) return;
 
@@ -83,7 +85,12 @@
       cta.classList.add("mobile-cta-" + mode);
       if (mode !== "hero") cta.classList.add("has-call");
 
-      main.textContent = read(mode + "-label", main.textContent.trim());
+      if (mainLabel) {
+        mainLabel.textContent = read(mode + "-label", mainLabel.textContent.trim());
+      } else {
+        main.textContent = read(mode + "-label", main.textContent.trim());
+      }
+      mainIcon?.classList.toggle("is-hidden", mode === "hero");
       main.setAttribute("href", read(mode + "-href", "#camere"));
 
       if (mode === "rooms") {
