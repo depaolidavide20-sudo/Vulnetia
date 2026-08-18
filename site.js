@@ -1,20 +1,31 @@
 (() => {
-  const waNumber = "393338426879";
   const labels = {
     it: {
-      greeting: "Ciao Vulnetia, vorrei ricevere disponibilità e prezzo per una camera.",
+      roomGreeting: "Ciao Vulnetia, vorrei ricevere disponibilità e prezzo per una camera.",
+      restaurantGreeting: "Ciao Vulnetia, vorrei prenotare un tavolo al ristorante.",
       room: "Soluzione",
-      dates: "Date",
+      recommendedRoom: "Soluzione: da consigliare in base a ospiti e durata",
+      checkin: "Check-in",
+      checkout: "Check-out",
+      date: "Data",
+      time: "Orario",
       guests: "Ospiti",
+      people: "Persone",
       name: "Nome",
       phone: "Telefono",
       notes: "Note"
     },
     en: {
-      greeting: "Hello Vulnetia, I would like to receive availability and price for a room.",
+      roomGreeting: "Hello Vulnetia, I would like to receive availability and price for a room.",
+      restaurantGreeting: "Hello Vulnetia, I would like to book a table at the restaurant.",
       room: "Room",
-      dates: "Dates",
+      recommendedRoom: "Option: please recommend based on guests and length of stay",
+      checkin: "Check-in",
+      checkout: "Check-out",
+      date: "Date",
+      time: "Time",
       guests: "Guests",
+      people: "People",
       name: "Name",
       phone: "Phone",
       notes: "Notes"
@@ -109,13 +120,11 @@
     window.addEventListener("resize", update);
   }
 
-  function textFrom(labelText) {
-    const label = Array.from(document.querySelectorAll("label")).find((item) =>
-      item.textContent.trim().toLowerCase().includes(labelText.toLowerCase()),
-    );
-    if (!label) return "";
-    const input = label.querySelector("input, textarea, select");
-    return input ? input.value.trim() : "";
+  function fieldValue(form, name) {
+    const field = form.elements.namedItem(name);
+    if (!field) return "";
+    if ("value" in field) return String(field.value || "").trim();
+    return "";
   }
 
   function pageRoomName() {
@@ -125,28 +134,43 @@
 
   function initBookingForms() {
     document.querySelectorAll(".booking-form").forEach((form) => {
-      const action = form.getAttribute("action") || "";
-      if (action.startsWith("tel:")) return;
-
       form.addEventListener("submit", (event) => {
         event.preventDefault();
         const lang = currentLang();
         const t = labels[lang];
-        const name = textFrom(lang === "en" ? "full name" : "nome e cognome") || textFrom("nome");
-        const phone = textFrom(lang === "en" ? "phone" : "telefono");
-        const guests = textFrom(lang === "en" ? "guests" : "ospiti");
-        const notes = textFrom(lang === "en" ? "notes" : "note");
-        const room = pageRoomName();
-        const message = [
-          t.greeting,
-          room ? t.room + ": " + room : "",
-          guests ? t.guests + ": " + guests : "",
-          name ? t.name + ": " + name : "",
-          phone ? t.phone + ": " + phone : "",
-          notes ? t.notes + ": " + notes : ""
-        ].filter(Boolean).join("\n");
+        const type = form.getAttribute("data-booking-form") || "rooms";
+        const number = form.getAttribute("data-wa-number") || (type === "restaurant" ? "393495591277" : "393338426879");
+        const name = fieldValue(form, "name");
+        const phone = fieldValue(form, "phone");
+        const notes = fieldValue(form, "notes");
+        const room = form.getAttribute("data-default-room") || pageRoomName();
+        let message;
 
-        window.open("https://wa.me/" + waNumber + "?text=" + encodeURIComponent(message), "_blank", "noopener");
+        if (type === "restaurant") {
+          message = [
+            t.restaurantGreeting,
+            name ? t.name + ": " + name : "",
+            phone ? t.phone + ": " + phone : "",
+            fieldValue(form, "date") ? t.date + ": " + fieldValue(form, "date") : "",
+            fieldValue(form, "time") ? t.time + ": " + fieldValue(form, "time") : "",
+            fieldValue(form, "people") ? t.people + ": " + fieldValue(form, "people") : "",
+            notes ? t.notes + ": " + notes : ""
+          ];
+        } else {
+          message = [
+            t.roomGreeting,
+            name ? t.name + ": " + name : "",
+            phone ? t.phone + ": " + phone : "",
+            fieldValue(form, "checkin") ? t.checkin + ": " + fieldValue(form, "checkin") : "",
+            fieldValue(form, "checkout") ? t.checkout + ": " + fieldValue(form, "checkout") : "",
+            fieldValue(form, "guests") ? t.guests + ": " + fieldValue(form, "guests") : "",
+            room ? t.room + ": " + room : t.recommendedRoom,
+            notes ? t.notes + ": " + notes : ""
+          ];
+        }
+
+        window.open("https://wa.me/" + number + "?text=" + encodeURIComponent(message.filter(Boolean).join("\n")), "_blank", "noopener");
+        form.reset();
       });
     });
   }
